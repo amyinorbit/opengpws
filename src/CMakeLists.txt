@@ -11,9 +11,9 @@
 #
 # CDDL HEADER END
 
-# Copyright 2022 Saso Kiselkov. All rights reserved.
+# Copyright 2025 Saso Kiselkov. All rights reserved.
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.10)
 
 project(opengpws)
 
@@ -132,7 +132,8 @@ else()
 	set_target_properties(opengpws PROPERTIES LINK_FLAGS
 	    "${CMAKE_SHARED_LINKER_FLAGS} -rdynamic -nodefaultlibs \
 	    -undefined_warning -fPIC -fvisibility=hidden \
-	    -static-libgcc -static-libstdc++")
+	    -static-libgcc -static-libstdc++ \
+	    -Wl,--version-script=symbols.version")
 endif()
 
 string(REGEX REPLACE "\n$" "" DEP_CFLAGS "${DEP_CFLAGS}")
@@ -176,6 +177,14 @@ endif()
 file(GLOB CURL_LIBRARY "${LIBACFUTILS}/curl/libcurl-${PLAT_LONG}/lib/libcurl.a")
 file(GLOB SSL_LIBRARY "${OPENSSL_PREFIX}/lib/libssl.a")
 file(GLOB CRYPTO_LIBRARY "${OPENSSL_PREFIX}/lib/libcrypto.a")
+# OpenSSL 3.5 uses the lib64/ subdirectory on Windows & Linux,
+# so be sure to fall back to that if necessary.
+if(NOT EXISTS "${SSL_LIBRARY}")
+	file(GLOB SSL_LIBRARY "${OPENSSL_PREFIX}/lib64/libssl.a")
+endif()
+if(NOT EXISTS "${CRYPTO_LIBRARY}")
+	file(GLOB CRYPTO_LIBRARY "${OPENSSL_PREFIX}/lib64/libcrypto.a")
+endif()
 file(GLOB LZMA_LIBRARY "${LZMA_PREFIX}/liblzma.a")
 file(GLOB SHP_LIBRARY "${SHP_PREFIX}/lib/libshp.a")
 file(GLOB ICONV_LIBRARY "${ICONV_PREFIX}/lib/libiconv.a")
